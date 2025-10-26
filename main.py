@@ -1,14 +1,13 @@
 import random
 
-
-def generer_combinaison(possibilites):
-    combinaison = []
-    for _ in range(4):
-        combinaison.append(random.choice(possibilites))
-    return combinaison
+AVAILABLE_ITEMS = ["Red", "Green", "Blue", "Yellow", "Orange", "Purple"]
+CODE_LENGTH = 4
+MAX_ATTEMPTS = 10
 
 
-possibilites = ["A", "B", "C", "D", "E", "F"]
-combinaison_secrete = generer_combinaison(possibilites)
+def generate_secret_sequence():
+    return [random.choice(AVAILABLE_ITEMS) for _ in range(CODE_LENGTH)]
 
-print(combinaison_secrete)
+
+secret_sequence = generate_secret_sequence()
+print("Secret_sequence_generated :", secret_sequence)
