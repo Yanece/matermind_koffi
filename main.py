@@ -1,70 +1,81 @@
 import random
+import os
+import time
 
-AVAILABLE_ITEMS = ["Red", "Green", "Blue", "Yellow", "Orange", "Purple"]
-CODE_LENGTH = 4
-MAX_ATTEMPTS = 10
-
-
-def generate_secret_sequence():
-    return [random.choice(AVAILABLE_ITEMS) for _ in range(CODE_LENGTH)]
-
-
-def evaluate_guess(secret_sequence, player_guess):
-    secret_copy = secret_sequence.copy()
-    guess_copy = player_guess.copy()
-
-    correct_position = 0
-    for index in range(CODE_LENGTH):
-        if guess_copy[index] == secret_copy[index]:
-            correct_position += 1
-            secret_copy[index] = guess_copy[index] = None
-
-    correct_item_wrong_position = 0
-    for index in range(CODE_LENGTH):
-        if guess_copy[index] is not None and guess_copy[index] in secret_copy:
-            correct_item_wrong_position += 1
-            secret_copy[secret_copy.index(guess_copy[index])] = None
-
-    return correct_position, correct_item_wrong_position
+COLOR_SYMBOLS = {
+    1: "🟣",
+    2: "🔴",
+    3: "🔵",
+    4: "🟠",
+    5: "🟢",
+    6: "🟡",
+}
 
 
-def play_mastermind(secret_sequence):
-    attempts = 0
+def generate_secret_combination():
+    return [random.randint(1, 6) for _ in range(4)]
 
-    print("🎯 Welcome to Mastermind!")
-    print(f"Available items: {', '.join(AVAILABLE_ITEMS)}")
+
+def display_combination(combination):
+    """Return a string of emoji colors for the given combination."""
+    return " ".join(COLOR_SYMBOLS[num] for num in combination)
+
+
+def get_player_guess():
+    """Ask the player to input 4 numbers (1-6)."""
+    while True:
+        try:
+            guess = [int(num) for num in input("Enter 4 numbers (1-6): ").split()]
+            if len(guess) != 4 or any(num < 1 or num > 6 for num in guess):
+                raise ValueError
+            return guess
+        except ValueError:
+            print("❌ Invalid input. Please enter exactly 4 numbers between 1 and 6.")
+
+
+def compute_feedback(secret_combination, player_guess):
+    correct_position = sum(s == g for s, g in zip(secret_combination, player_guess))
+    secret_remaining = []
+    guess_remaining = []
+    for s, g in zip(secret_combination, player_guess):
+        if s != g:
+            secret_remaining.append(s)
+            guess_remaining.append(g)
+    correct_color = 0
+    for color in guess_remaining:
+        if color in secret_remaining:
+            correct_color += 1
+            secret_remaining.remove(color)
+    return correct_position, correct_color
+
+
+# --- Main game loop ---
+secret_combination = generate_secret_combination()
+max_attempts = 10
+attempt = 0
+
+print("🎯 Welcome to MasterMind!")
+print("Colors available:")
+for number, symbol in COLOR_SYMBOLS.items():
+    print(f"{number}: {symbol}")
+print("\nTry to guess the secret combination of 4 colors!")
+print("Symbol meaning → * : correct position | - : correct color\n")
+
+while attempt < max_attempts:
+    attempt += 1
+    print(f"\nAttempt {attempt}/{max_attempts}")
+    player_guess = get_player_guess()
+    correct_position, correct_color = compute_feedback(secret_combination, player_guess)
+    feedback = "*" * correct_position + "-" * correct_color
+    print("Your guess:", display_combination(player_guess))
+    print("Feedback:", feedback)
+
+    if correct_position == 4:
+        print("\n🎉 You found the secret combination!")
+        print("Secret was:", display_combination(secret_combination))
+        break
+else:
     print(
-        f"Guess the secret sequence of {CODE_LENGTH} items. You have {MAX_ATTEMPTS} attempts.\n"
+        "\n😢 You lost! The secret combination was:",
+        display_combination(secret_combination),
     )
-
-    while attempts < MAX_ATTEMPTS:
-        player_input = input(f"Attempt {attempts + 1}: ").strip().title().split()
-
-        if len(player_input) != CODE_LENGTH or any(
-            item not in AVAILABLE_ITEMS for item in player_input
-        ):
-            print(
-                f"Invalid input! Enter {CODE_LENGTH} items from: {', '.join(AVAILABLE_ITEMS)}\n"
-            )
-            continue
-
-        attempts += 1
-        correct_position, correct_item_wrong_position = evaluate_guess(
-            secret_sequence, player_input
-        )
-
-        print(
-            f"Feedback: {'*' * correct_position}{'-' * correct_item_wrong_position}\n"
-        )
-
-        if correct_position == CODE_LENGTH:
-            print(
-                f"🎉 Congratulations! You guessed the secret sequence in {attempts} attempts."
-            )
-            return
-
-    print("😢 You lost! The secret sequence was:", " ".join(secret_sequence))
-
-
-secret_sequence = generate_secret_sequence()
-play_mastermind(secret_sequence)
